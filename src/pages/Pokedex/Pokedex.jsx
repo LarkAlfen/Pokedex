@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPokemons } from "../../services/pokemonApi";
-
+import { generations } from "../../data/generations";
 import { Filters } from "../../components/Filters/Filters";
 import { PokemonCard } from "../../components/PokemonCard/PokemonCard";
 import "./Pokedex.scss"
@@ -17,25 +17,44 @@ export function Pokedex() {
     useEffect(() => {
         async function loadPokemons() {
             try {
-                const data = await getPokemons(page, LIMIT);
+                const selectedGeneration =
+                    generations.find(
+                        (gen) => gen.value === generation
+                    );
+
+                const data = await getPokemons(
+                    page,
+                    LIMIT,
+                    selectedGeneration.min,
+                    selectedGeneration.max
+                );
 
                 setPokemons(data.pokemons);
                 setTotal(data.total);
+
             } catch (error) {
                 console.error(error);
             }
         }
 
         loadPokemons();
-    }, [page]);
+    }, [page, generation]);
+
+
 
     const totalPages = Math.ceil(total / LIMIT);
 
+    function handleGenerationChange(value) {
+        setGeneration(value);
+        setPage(1);
+    }
 
     return (
         <main className="container">
 
             <Filters
+                generation={generation}
+                onGenerationChange={handleGenerationChange}
             />
 
             <div className="pokemon-grid">
