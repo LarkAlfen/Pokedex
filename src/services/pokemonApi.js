@@ -1,37 +1,68 @@
 const API_URL = "https://pokeapi.co/api/v2";
 
-export async function getPokemons() {
-  const response = await fetch(`${API_URL}/pokemon?limit=2000`);
+/**
+ * Récupère la liste de tous les Pokémon
+ */
+export async function getPokemons(page = 1, limit = 24) {
+  const offset = (page - 1) * limit;
+
+  const response = await fetch(
+    `${API_URL}/pokemon?limit=${limit}&offset=${offset}`
+  );
 
   if (!response.ok) {
-    throw new Error("Erreur lors de la récupération des Pokémon");
+    throw new Error("Impossible de récupérer les Pokémon");
   }
 
   const data = await response.json();
 
-  const pokemonDetails = await Promise.all(
-    data.results.map(async (pokemon) => {
-      const response = await fetch(pokemon.url);
+  const pokemons = data.results.map((pokemon) => {
+    const id = Number(
+      pokemon.url.split("/").filter(Boolean).pop()
+    );
 
-      if (!response.ok) {
-        throw new Error(
-          `Erreur lors de la récupération de ${pokemon.name}`
-        );
-      }
+    return {
+      id,
+      name: pokemon.name,
+      url: pokemon.url,
+    };
+  });
 
-      const details = await response.json();
+  return {
+    pokemons,
+    total: data.count,
+  };
+}
 
-      return {
-        id: details.id,
-        name: details.name,
-        image: details.sprites.front_default,
-        types: details.types.map((type) => type.type.name),
-        height: details.height,
-        weight: details.weight,
-        stats: details.stats,
-      };
-    })
-  );
 
-  return pokemonDetails;
+/**
+ * Récupère les détails d'un Pokémon
+ */
+export async function getPokemon(id) {
+  const response = await fetch(`${API_URL}/pokemon/${id}`);
+
+  if (!response.ok) {
+    throw new Error(`Impossible de récupérer le Pokémon ${id}`);
+  }
+
+  const pokemon = await response.json();
+
+  return {
+    id: pokemon.id,
+    name: pokemon.name,
+
+    image:
+      pokemon.sprites.other["official-artwork"].front_default ??
+      pokemon.sprites.front_default,
+
+    types: pokemon.types.map((type) => type.type.name),
+
+    height: pokemon.height,
+    weight: pokemon.weight,
+
+    stats: pokemon.stats.map((stat) => ({
+      name: stat.stat.name,
+      value: stat.base_stat,
+    })),
+  };
 }
