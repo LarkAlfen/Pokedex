@@ -13,21 +13,25 @@ export function Pokedex() {
     const [total, setTotal] = useState(0);
     const [pokemons, setPokemons] = useState([]);
     const [generation, setGeneration] = useState("all");
+    const [selectedTypes, setSelectedTypes] = useState([]);
 
     useEffect(() => {
         async function loadPokemons() {
             try {
                 const selectedGeneration =
                     generations.find(
-                        (gen) => gen.value === generation
+                        (gen) =>
+                            gen.value === generation
                     );
 
-                const data = await getPokemons(
-                    page,
-                    LIMIT,
-                    selectedGeneration.min,
-                    selectedGeneration.max
-                );
+                const data =
+                    await getPokemons(
+                        page,
+                        LIMIT,
+                        selectedGeneration.min,
+                        selectedGeneration.max,
+                        selectedTypes
+                    );
 
                 setPokemons(data.pokemons);
                 setTotal(data.total);
@@ -38,9 +42,36 @@ export function Pokedex() {
         }
 
         loadPokemons();
-    }, [page, generation]);
 
+    }, [page, generation, selectedTypes]);
 
+    function handleTypeChange(type) {
+        if (!type) return;
+
+        setSelectedTypes((currentTypes) => {
+            if (currentTypes.includes(type)) {
+                return currentTypes;
+            }
+
+            if (currentTypes.length >= 2) {
+                return currentTypes;
+            }
+
+            return [...currentTypes, type];
+        });
+
+        setPage(1);
+    }
+
+    function handleRemoveType(typeToRemove) {
+        setSelectedTypes((currentTypes) =>
+            currentTypes.filter(
+                (type) => type !== typeToRemove
+            )
+        );
+
+        setPage(1);
+    }
 
     const totalPages = Math.ceil(total / LIMIT);
 
@@ -55,6 +86,9 @@ export function Pokedex() {
             <Filters
                 generation={generation}
                 onGenerationChange={handleGenerationChange}
+                selectedTypes={selectedTypes}
+                onTypeChange={handleTypeChange}
+                onRemoveType={handleRemoveType}
             />
 
             <div className="pokemon-grid">

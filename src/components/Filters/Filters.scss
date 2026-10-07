@@ -1,0 +1,70 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  &__controls {
+    display: flex;
+    gap: 15px;
+  }
+
+  &__select {
+    padding: 10px 15px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background-color: #fff;
+
+    cursor: pointer;
+  }
+
+  &__active {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    min-height: 35px;
+  }
+
+  &__tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 6px 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 50px;
+
+    background-color: #fff;
+  }
+
+  &__tag-icon {
+    width: 20px;
+    height: 20px;
+
+    object-fit: contain;
+  }
+
+  &__tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: 4px;
+
+    font-size: 1.2rem;
+    line-height: 1;
+
+    cursor: pointer;
+
+    opacity: 0.6;
+
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
