@@ -1,8 +1,7 @@
 const API_URL = "https://pokeapi.co/api/v2";
 
-/**
- * Récupère la liste de tous les Pokémon
- */
+const pokemonCache = new Map();
+
 export async function getPokemons(
   page = 1,
   limit = 24,
@@ -27,36 +26,13 @@ export async function getPokemons(
   );
 
   if (!response.ok) {
-    throw new Error(
-      "Impossible de récupérer les Pokémon"
-    );
+    throw new Error("Impossible de récupérer les Pokémon");
   }
 
   const data = await response.json();
 
   const pokemons = await Promise.all(
-    data.results.map(async (pokemon) => {
-      const id = Number(
-        pokemon.url.split("/").filter(Boolean).pop()
-      );
-
-      const speciesResponse = await fetch(
-        `${API_URL}/pokemon-species/${id}`
-      );
-
-      const species = await speciesResponse.json();
-
-      const frenchName = species.names.find(
-        (name) => name.language.name === "fr"
-      );
-
-      return {
-        id,
-        name: pokemon.name,
-        nameFr: frenchName?.name ?? pokemon.name,
-        url: pokemon.url,
-      };
-    })
+    data.results.map((pokemon) => getPokemon(pokemon))
   );
 
   return {
@@ -65,34 +41,57 @@ export async function getPokemons(
   };
 }
 
-/**
- * Récupère les détails d'un Pokémon
- */
-export async function getPokemon(id) {
-  const response = await fetch(`${API_URL}/pokemon/${id}`);
 
-  if (!response.ok) {
-    throw new Error(`Impossible de récupérer le Pokémon ${id}`);
+async function getPokemon(pokemon) {
+  const id = Number(
+    pokemon.url.split("/").filter(Boolean).pop()
+  );
+
+  // Le Pokémon existe déjà dans le cache
+  if (pokemonCache.has(id)) {
+    return pokemonCache.get(id);
   }
 
-  const pokemon = await response.json();
+  // Sinon on appelle PokéAPI
+  const [pokemonResponse, speciesResponse] =
+    await Promise.all([
+      fetch(`${API_URL}/pokemon/${id}`),
+      fetch(`${API_URL}/pokemon-species/${id}`),
+    ]);
 
-  return {
-    id: pokemon.id,
+  if (!pokemonResponse.ok || !speciesResponse.ok) {
+    throw new Error(
+      `Impossible de récupérer les informations de ${pokemon.name}`
+    );
+  }
+
+  const pokemonData = await pokemonResponse.json();
+  const speciesData = await speciesResponse.json();
+
+  const frenchName = speciesData.names.find(
+    (name) => name.language.name === "fr"
+  );
+
+  const pokemonDetails = {
+    id,
+
     name: pokemon.name,
 
+    nameFr:
+      frenchName?.name ?? pokemon.name,
+
     image:
-      pokemon.sprites.other["official-artwork"].front_default ??
-      pokemon.sprites.front_default,
+      pokemonData.sprites.other["official-artwork"]
+        .front_default ??
+      pokemonData.sprites.front_default,
 
-    types: pokemon.types.map((type) => type.type.name),
-
-    height: pokemon.height,
-    weight: pokemon.weight,
-
-    stats: pokemon.stats.map((stat) => ({
-      name: stat.stat.name,
-      value: stat.base_stat,
-    })),
+    types: pokemonData.types.map(
+      (type) => type.type.name
+    ),
   };
+
+  // On sauvegarde le résultat
+  pokemonCache.set(id, pokemonDetails);
+
+  return pokemonDetails;
 }
