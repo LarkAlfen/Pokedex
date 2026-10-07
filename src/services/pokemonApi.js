@@ -1,7 +1,10 @@
+import { normalizeText } from "../utils/normalizeText";
+
 const API_URL = "https://pokeapi.co/api/v2";
 
 const pokemonCache = new Map();
 const typeCache = new Map();
+const nameCache = new Map();
 
 
 export async function getPokemons(
@@ -9,20 +12,23 @@ export async function getPokemons(
   limit = 24,
   min = 1,
   max,
-  selectedTypes = []
+  selectedTypes = [],
+  search = ""
 ) {
   let pokemonList;
 
-  // Aucun filtre de type
+
+  // =========================
+  // GÉNÉRATION
+  // =========================
+
   if (selectedTypes.length === 0) {
     pokemonList = createGenerationList(min, max);
-  }
+  } else {
+    pokemonList = await getPokemonsByTypes(
+      selectedTypes
+    );
 
-  // Un ou deux types
-  else {
-    pokemonList = await getPokemonsByTypes(selectedTypes);
-
-    // On filtre ensuite par génération
     pokemonList = pokemonList.filter(
       (pokemon) =>
         pokemon.id >= min &&
@@ -31,22 +37,35 @@ export async function getPokemons(
   }
 
 
-  // Nombre total APRÈS filtrage
+  // =========================
+  // RECHERCHE
+  // =========================
+
+  if (search.trim()) {
+    pokemonList = await filterPokemonsByName(
+      pokemonList,
+      search
+    );
+  }
+
+
+  // =========================
+  // PAGINATION
+  // =========================
+
   const total = pokemonList.length;
 
-
-  // Pagination
   const start = (page - 1) * limit;
   const end = start + limit;
 
-  const paginatedPokemons = pokemonList.slice(
-    start,
-    end
-  );
+  const paginatedPokemons =
+    pokemonList.slice(start, end);
 
 
-  // On récupère uniquement les détails
-  // des Pokémon visibles
+  // =========================
+  // DÉTAILS
+  // =========================
+
   const pokemons = await Promise.all(
     paginatedPokemons.map((pokemon) =>
       getPokemonDetails(pokemon)
@@ -61,96 +80,117 @@ export async function getPokemons(
 }
 
 
-async function getPokemonDetails(pokemon) {
-  const id = pokemon.id;
 
-
-  // Cache
-  if (pokemonCache.has(id)) {
-    return pokemonCache.get(id);
-  }
-
-
-  const [
-    pokemonResponse,
-    speciesResponse
-  ] = await Promise.all([
-    fetch(`${API_URL}/pokemon/${id}`),
-    fetch(`${API_URL}/pokemon-species/${id}`),
-  ]);
-
-
-  if (
-    !pokemonResponse.ok ||
-    !speciesResponse.ok
-  ) {
-    throw new Error(
-      `Impossible de récupérer le Pokémon #${id}`
-    );
-  }
-
-
-  const pokemonData =
-    await pokemonResponse.json();
-
-  const speciesData =
-    await speciesResponse.json();
-
-
-  const frenchName =
-    speciesData.names.find(
-      (name) =>
-        name.language.name === "fr"
-    );
-
-
-  const pokemonDetails = {
-    id,
-
-    name: pokemonData.name,
-
-    nameFr:
-      frenchName?.name ??
-      pokemonData.name,
-
-    image:
-      pokemonData.sprites.other[
-        "official-artwork"
-      ].front_default ??
-      pokemonData.sprites.front_default,
-
-    types:
-      pokemonData.types.map(
-        (type) => type.type.name
-      ),
-  };
-
-
-  pokemonCache.set(
-    id,
-    pokemonDetails
-  );
-
-
-  return pokemonDetails;
-}
+// ========================================
+// CRÉATION LISTE GÉNÉRATION
+// ========================================
 
 function createGenerationList(min, max) {
   return Array.from(
-    { length: max - min + 1 },
-    (_, index) => {
-      const id = min + index;
-
-      return {
-        id,
-        name: null,
-      };
-    }
+    {
+      length: max - min + 1,
+    },
+    (_, index) => ({
+      id: min + index,
+    })
   );
 }
 
+
+
+// ========================================
+// RECHERCHE PAR NOM
+// ========================================
+
+async function filterPokemonsByName(
+  pokemonList,
+  search
+) {
+  const normalizedSearch =
+    normalizeText(search);
+
+
+  const pokemonsWithNames =
+    await Promise.all(
+      pokemonList.map(async (pokemon) => {
+        const nameFr =
+          await getPokemonFrenchName(
+            pokemon.id
+          );
+
+        return {
+          ...pokemon,
+          nameFr,
+        };
+      })
+    );
+
+
+  return pokemonsWithNames.filter(
+    (pokemon) =>
+      normalizeText(
+        pokemon.nameFr
+      ).includes(normalizedSearch)
+  );
+}
+
+
+
+// ========================================
+// NOM FRANÇAIS
+// ========================================
+
+async function getPokemonFrenchName(id) {
+  // Déjà présent dans les détails
+  if (pokemonCache.has(id)) {
+    return pokemonCache.get(id).nameFr;
+  }
+
+
+  // Déjà présent dans le cache des noms
+  if (nameCache.has(id)) {
+    return nameCache.get(id);
+  }
+
+
+  const response = await fetch(
+    `${API_URL}/pokemon-species/${id}`
+  );
+
+
+  if (!response.ok) {
+    throw new Error(
+      `Impossible de récupérer le nom du Pokémon #${id}`
+    );
+  }
+
+
+  const data = await response.json();
+
+
+  const frenchName = data.names.find(
+    (name) =>
+      name.language.name === "fr"
+  );
+
+
+  const name =
+    frenchName?.name ?? data.name;
+
+
+  nameCache.set(id, name);
+
+
+  return name;
+}
+
+
+
+// ========================================
+// POKÉMON PAR TYPE
+// ========================================
+
 async function getPokemonsByType(type) {
-  // On regarde d'abord dans le cache
   if (typeCache.has(type)) {
     return typeCache.get(type);
   }
@@ -188,14 +228,21 @@ async function getPokemonsByType(type) {
   );
 
 
-  // On met la liste dans le cache
   typeCache.set(type, pokemons);
 
 
   return pokemons;
 }
 
-async function getPokemonsByTypes(selectedTypes) {
+
+
+// ========================================
+// DOUBLE TYPE
+// ========================================
+
+async function getPokemonsByTypes(
+  selectedTypes
+) {
   const typeLists = await Promise.all(
     selectedTypes.map((type) =>
       getPokemonsByType(type)
@@ -203,14 +250,15 @@ async function getPokemonsByTypes(selectedTypes) {
   );
 
 
-  // Un seul type
   if (typeLists.length === 1) {
     return typeLists[0];
   }
 
 
-  // Deux types
-  const [firstType, secondType] = typeLists;
+  const [
+    firstType,
+    secondType
+  ] = typeLists;
 
 
   return firstType.filter((pokemon) =>
@@ -221,56 +269,98 @@ async function getPokemonsByTypes(selectedTypes) {
   );
 }
 
-async function getPokemon(pokemon) {
-  const id = Number(
-    pokemon.url.split("/").filter(Boolean).pop()
-  );
 
-  // Le Pokémon existe déjà dans le cache
+
+// ========================================
+// DÉTAILS DU POKÉMON
+// ========================================
+
+async function getPokemonDetails(pokemon) {
+  const id = pokemon.id;
+
+
   if (pokemonCache.has(id)) {
     return pokemonCache.get(id);
   }
 
-  // Sinon on appelle PokéAPI
-  const [pokemonResponse, speciesResponse] =
-    await Promise.all([
-      fetch(`${API_URL}/pokemon/${id}`),
-      fetch(`${API_URL}/pokemon-species/${id}`),
-    ]);
 
-  if (!pokemonResponse.ok || !speciesResponse.ok) {
+  const [
+    pokemonResponse,
+    speciesResponse
+  ] = await Promise.all([
+    fetch(
+      `${API_URL}/pokemon/${id}`
+    ),
+
+    fetch(
+      `${API_URL}/pokemon-species/${id}`
+    ),
+  ]);
+
+
+  if (
+    !pokemonResponse.ok ||
+    !speciesResponse.ok
+  ) {
     throw new Error(
-      `Impossible de récupérer les informations de ${pokemon.name}`
+      `Impossible de récupérer le Pokémon #${id}`
     );
   }
 
-  const pokemonData = await pokemonResponse.json();
-  const speciesData = await speciesResponse.json();
 
-  const frenchName = speciesData.names.find(
-    (name) => name.language.name === "fr"
-  );
+  const pokemonData =
+    await pokemonResponse.json();
+
+  const speciesData =
+    await speciesResponse.json();
+
+
+  const frenchName =
+    speciesData.names.find(
+      (name) =>
+        name.language.name === "fr"
+    );
+
+
+  const nameFr =
+    frenchName?.name ??
+    pokemonData.name;
+
 
   const pokemonDetails = {
     id,
 
-    name: pokemon.name,
+    name: pokemonData.name,
 
-    nameFr:
-      frenchName?.name ?? pokemon.name,
+    nameFr,
 
     image:
-      pokemonData.sprites.other["official-artwork"]
-        .front_default ??
+      pokemonData.sprites.other[
+        "official-artwork"
+      ].front_default ??
       pokemonData.sprites.front_default,
 
-    types: pokemonData.types.map(
-      (type) => type.type.name
-    ),
+    types:
+      pokemonData.types.map(
+        (type) => type.type.name
+      ),
   };
 
-  // On sauvegarde le résultat
-  pokemonCache.set(id, pokemonDetails);
+
+  // Cache complet
+  pokemonCache.set(
+    id,
+    pokemonDetails
+  );
+
+
+  // On profite également du résultat
+  // pour remplir le cache des noms
+  nameCache.set(
+    id,
+    nameFr
+  );
+
 
   return pokemonDetails;
 }

@@ -10,6 +10,8 @@ export function Filters({
   selectedTypes,
   onTypeChange,
   onRemoveType,
+  search,
+  onSearchChange,
 }) {
   return (
     <div className="filters">
@@ -95,6 +97,16 @@ export function Filters({
           );
         })}
       </div>
+
+      <input
+        type="search"
+        className="filters__search"
+        placeholder="Rechercher un Pokémon..."
+        value={search}
+        onChange={(e) =>
+          onSearchChange(e.target.value)
+        }
+      />
 
     </div>
   );

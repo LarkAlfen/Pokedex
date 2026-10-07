@@ -14,7 +14,7 @@ export function Pokedex() {
     const [pokemons, setPokemons] = useState([]);
     const [generation, setGeneration] = useState("all");
     const [selectedTypes, setSelectedTypes] = useState([]);
-
+    const [search, setSearch] = useState("");
     useEffect(() => {
         async function loadPokemons() {
             try {
@@ -30,7 +30,8 @@ export function Pokedex() {
                         LIMIT,
                         selectedGeneration.min,
                         selectedGeneration.max,
-                        selectedTypes
+                        selectedTypes,
+                        search
                     );
 
                 setPokemons(data.pokemons);
@@ -43,7 +44,7 @@ export function Pokedex() {
 
         loadPokemons();
 
-    }, [page, generation, selectedTypes]);
+    }, [page, generation, selectedTypes, search]);
 
     function handleTypeChange(type) {
         if (!type) return;
@@ -80,6 +81,11 @@ export function Pokedex() {
         setPage(1);
     }
 
+    function handleSearchChange(value) {
+        setSearch(value);
+        setPage(1);
+    }
+
     return (
         <main className="container">
 
@@ -89,6 +95,8 @@ export function Pokedex() {
                 selectedTypes={selectedTypes}
                 onTypeChange={handleTypeChange}
                 onRemoveType={handleRemoveType}
+                search={search}
+                onSearchChange={handleSearchChange}
             />
 
             <div className="pokemon-grid">
