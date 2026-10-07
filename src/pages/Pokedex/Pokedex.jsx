@@ -5,6 +5,7 @@ import { Filters } from "../../components/Filters/Filters";
 import { PokemonCard } from "../../components/PokemonCard/PokemonCard";
 import "./Pokedex.scss"
 import { Pagination } from "../../components/Pagination/Pagination";
+import { useDebounce } from "../../hooks/useDebounce";
 
 const LIMIT = 24;
 
@@ -15,6 +16,8 @@ export function Pokedex() {
     const [generation, setGeneration] = useState("all");
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search, 300);
+
     useEffect(() => {
         async function loadPokemons() {
             try {
@@ -31,7 +34,7 @@ export function Pokedex() {
                         selectedGeneration.min,
                         selectedGeneration.max,
                         selectedTypes,
-                        search
+                        debouncedSearch
                     );
 
                 setPokemons(data.pokemons);
@@ -44,7 +47,7 @@ export function Pokedex() {
 
         loadPokemons();
 
-    }, [page, generation, selectedTypes, search]);
+    }, [page, generation, selectedTypes, debouncedSearch]);
 
     function handleTypeChange(type) {
         if (!type) return;

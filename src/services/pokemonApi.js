@@ -5,7 +5,7 @@ const API_URL = "https://pokeapi.co/api/v2";
 const pokemonCache = new Map();
 const typeCache = new Map();
 const nameCache = new Map();
-
+let nameIndexCache = null;
 
 export async function getPokemons(
   page = 1,
@@ -18,16 +18,15 @@ export async function getPokemons(
   let pokemonList;
 
 
-  // =========================
-  // GÉNÉRATION
-  // =========================
-
+  // Génération
   if (selectedTypes.length === 0) {
-    pokemonList = createGenerationList(min, max);
+    pokemonList =
+      createGenerationList(min, max);
   } else {
-    pokemonList = await getPokemonsByTypes(
-      selectedTypes
-    );
+    pokemonList =
+      await getPokemonsByTypes(
+        selectedTypes
+      );
 
     pokemonList = pokemonList.filter(
       (pokemon) =>
@@ -37,40 +36,35 @@ export async function getPokemons(
   }
 
 
-  // =========================
-  // RECHERCHE
-  // =========================
-
-  if (search.trim()) {
-    pokemonList = await filterPokemonsByName(
+  // Recherche
+  pokemonList =
+    await filterPokemonsByName(
       pokemonList,
       search
     );
-  }
 
 
-  // =========================
-  // PAGINATION
-  // =========================
-
+  // Pagination
   const total = pokemonList.length;
 
-  const start = (page - 1) * limit;
-  const end = start + limit;
+  const start =
+    (page - 1) * limit;
+
+  const end =
+    start + limit;
 
   const paginatedPokemons =
     pokemonList.slice(start, end);
 
 
-  // =========================
-  // DÉTAILS
-  // =========================
-
-  const pokemons = await Promise.all(
-    paginatedPokemons.map((pokemon) =>
-      getPokemonDetails(pokemon)
-    )
-  );
+  // Détails uniquement des Pokémon affichés
+  const pokemons =
+    await Promise.all(
+      paginatedPokemons.map(
+        (pokemon) =>
+          getPokemonDetails(pokemon)
+      )
+    );
 
 
   return {
@@ -79,7 +73,91 @@ export async function getPokemons(
   };
 }
 
+async function filterPokemonsByName(
+  pokemonList,
+  search
+) {
+  if (!search.trim()) {
+    return pokemonList;
+  }
 
+  const nameIndex =
+    await getPokemonNameIndex();
+
+  const normalizedSearch =
+    normalizeText(search);
+
+  const matchingIds = new Set(
+    nameIndex
+      .filter((pokemon) =>
+        pokemon.normalizedName.includes(
+          normalizedSearch
+        )
+      )
+      .map((pokemon) => pokemon.id)
+  );
+
+  return pokemonList.filter(
+    (pokemon) =>
+      matchingIds.has(pokemon.id)
+  );
+}
+
+async function getPokemonNameIndex() {
+  if (nameIndexCache) {
+    return nameIndexCache;
+  }
+
+  const response = await fetch(
+    `${API_URL}/pokemon-species?limit=2000`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Impossible de récupérer l'index des Pokémon"
+    );
+  }
+
+  const data = await response.json();
+
+  const species = await Promise.all(
+    data.results.map(async (pokemon) => {
+      const id = Number(
+        pokemon.url
+          .split("/")
+          .filter(Boolean)
+          .pop()
+      );
+
+      const response = await fetch(pokemon.url);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const speciesData = await response.json();
+
+      const frenchName = speciesData.names.find(
+        (name) => name.language.name === "fr"
+      );
+
+      const nameFr =
+        frenchName?.name ?? pokemon.name;
+
+      return {
+        id,
+        name: pokemon.name,
+        nameFr,
+        normalizedName:
+          normalizeText(nameFr),
+      };
+    })
+  );
+
+  nameIndexCache = species.filter(Boolean);
+
+  return nameIndexCache;
+}
 
 // ========================================
 // CRÉATION LISTE GÉNÉRATION

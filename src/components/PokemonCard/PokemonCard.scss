@@ -3,6 +3,8 @@
   flex-direction: column;
   align-items: center;
 
+  cursor: pointer;
+  user-select: none;
   position: relative;
 
   padding: 20px;

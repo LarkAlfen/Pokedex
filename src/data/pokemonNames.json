@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "bulbasaur",
+    "nameFr": "Bulbizarre"
+  },
+  {
+    "id": 2,
+    "name": "ivysaur",
+    "nameFr": "Herbizarre"
+  },
+  {
+    "id": 3,
+    "name": "venusaur",
+    "nameFr": "Florizarre"
+  }
+]
