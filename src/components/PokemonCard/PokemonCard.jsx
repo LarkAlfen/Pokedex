@@ -1,9 +1,9 @@
 import "./PokemonCard.scss";
 import { typeIcons } from "../../data/typeIcons";
 
-export function PokemonCard({ pokemon }) {
+export function PokemonCard({ pokemon, onClick }) {
     return (
-        <article className="pokemon-card">
+        <article className="pokemon-card" onClick={onClick}>
 
             <span className="pokemon-card__id">
                 #{pokemon.id.toString().padStart(3, "0")}

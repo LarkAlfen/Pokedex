@@ -1,0 +1,254 @@
+
+.pokemon-modal {
+  position: relative;
+  width: min(1000px, 100%);
+  padding: 55px;
+
+  background: #ffffff;
+  color: #1c1c1c;
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+
+  animation: modalAppear 0.3s ease;
+
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    overflow-y: auto;
+  }
+
+  &__close {
+    position: absolute;
+    top: 18px;
+    right: 25px;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    background: #f7f8fa;
+    color: #333;
+
+    font-size: 26px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #e9eaee;
+      transform: rotate(90deg);
+    }
+  }
+
+  &__content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 25px;
+  }
+
+  // INFORMATIONS
+
+  &__infos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    padding: 18px 20px;
+
+    background: #f7f8fa;
+    border: 1px solid #eceef1;
+    border-radius: 14px;
+
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: #d1d5db;
+    }
+  }
+
+  &__label {
+    color: #9299a5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  &__number {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: clamp(26px, 3vw, 36px);
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+
+  &__types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__type {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px 16px;
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    text-transform: capitalize;
+  }
+
+  &__description {
+    margin: 0;
+    color: #555e6b;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  // IMAGE
+
+  &__visual {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 400px;
+    padding: 35px;
+
+    background: #f7f8fa;
+    border: 1px solid #eceef1;
+    border-radius: 20px;
+    overflow: hidden;
+
+    img {
+      position: relative;
+      z-index: 1;
+
+      width: 100%;
+      max-width: 370px;
+      height: auto;
+      object-fit: contain;
+
+      filter: drop-shadow(
+        0 18px 18px rgba(0, 0, 0, 0.12)
+      );
+
+      transition: transform 0.35s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+
+  &__visual-number {
+    position: absolute;
+    top: 20px;
+    left: 25px;
+
+    color: #e0e3e8;
+    font-size: 40px;
+    font-weight: 800;
+  }
+
+  // COULEURS DES TYPES
+
+  &__type {
+    &--normal   { background: #9299a5; }
+    &--fire     { background: #f08030; }
+    &--water    { background: #5090e8; }
+    &--electric { background: #f4c430; color: #333; }
+    &--grass    { background: #62b85a; }
+    &--ice      { background: #8bd8e8; color: #24535e; }
+    &--fighting { background: #c44d48; }
+    &--poison   { background: #a45ab5; }
+    &--ground   { background: #d6b45e; color: #493b20; }
+    &--flying   { background: #8c9de8; }
+    &--psychic  { background: #ef6f9c; }
+    &--bug      { background: #92ad28; }
+    &--rock     { background: #a99550; }
+    &--ghost    { background: #7060a0; }
+    &--dragon   { background: #6753cf; }
+    &--dark     { background: #63574f; }
+    &--steel    { background: #929eae; }
+    &--fairy    { background: #e69fbd; color: #542d43; }
+  }
+
+  // RESPONSIVE
+
+  @media (max-width: 750px) {
+    padding: 65px 22px 25px;
+    border-radius: 18px;
+
+    &__content {
+      grid-template-columns: 1fr;
+    }
+
+    &__visual {
+      grid-row: 1;
+      min-height: 250px;
+
+      img {
+        max-width: 230px;
+      }
+    }
+
+    &__visual-number {
+      font-size: 28px;
+    }
+
+    &__field {
+      padding: 15px;
+    }
+  }
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pokemon-modal {
+    animation: none;
+  }
+}

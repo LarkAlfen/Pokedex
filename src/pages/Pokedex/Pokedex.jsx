@@ -6,6 +6,7 @@ import { PokemonCard } from "../../components/PokemonCard/PokemonCard";
 import "./Pokedex.scss"
 import { Pagination } from "../../components/Pagination/Pagination";
 import { useDebounce } from "../../hooks/useDebounce";
+import { PokemonModal } from "../../components/PokemonModal/PokemonModal";
 
 const LIMIT = 24;
 
@@ -17,7 +18,7 @@ export function Pokedex() {
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search, 300);
-
+    const [selectedPokemon, setSelectedPokemon] = useState(null);
     useEffect(() => {
         async function loadPokemons() {
             try {
@@ -107,6 +108,7 @@ export function Pokedex() {
                     <PokemonCard
                         key={pokemon.id}
                         pokemon={pokemon}
+                        onClick={() => setSelectedPokemon(pokemon)}
                     />
                 ))}
             </div>
@@ -114,6 +116,10 @@ export function Pokedex() {
                 page={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
+            />
+            <PokemonModal
+                pokemon={selectedPokemon}
+                onClose={() => setSelectedPokemon(null)}
             />
         </main>
     );
