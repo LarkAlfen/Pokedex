@@ -1,11 +1,51 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { typeIcons } from "../../data/typeIcons";
 import "./PokemonModal.scss";
 import { pokemonTypes } from "../../data/pokemonTypes";
+import { PokemonModel } from "../PokemonModel/PokemonModel";
+import { getPokemon3DModel } from "../../services/pokemon3dApi";
 
 export function PokemonModal({ pokemon, onClose }) {
+    const [show3D, setShow3D] = useState(false);
+    const [modelUrl, setModelUrl] = useState(null);
+    const [loading3D, setLoading3D] = useState(false);
+    const [hasIdleAnimation, setHasIdleAnimation] = useState(false);
+
+    useEffect(() => {
+        if (!pokemon) return;
+
+        let cancelled = false;
+
+        setShow3D(false);
+        setModelUrl(null);
+        setLoading3D(true);
+        setHasIdleAnimation(false);
+        async function loadModel() {
+            try {
+                const url = await getPokemon3DModel(pokemon.id);
+
+                if (!cancelled) {
+                    setModelUrl(url);
+                }
+            } catch (error) {
+                console.error("Erreur modèle 3D :", error);
+            } finally {
+                if (!cancelled) {
+                    setLoading3D(false);
+                }
+            }
+        }
+
+        loadModel();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pokemon?.id]);
+
+
+
     useEffect(() => {
         if (!pokemon) return;
 
@@ -26,7 +66,18 @@ export function PokemonModal({ pokemon, onClose }) {
         };
     }, [pokemon, onClose]);
 
+    const canShow3D = Boolean(modelUrl && hasIdleAnimation);
+
+
+    console.log({
+        pokemon: pokemon?.nameFr,
+        modelUrl,
+        hasIdleAnimation,
+        canShow3D,
+    });
     if (!pokemon) return null;
+
+
 
     return createPortal(
         <div
@@ -92,16 +143,49 @@ export function PokemonModal({ pokemon, onClose }) {
 
                     </div>
 
-                    <div className="pokemon-modal__visual">
-                        <span className="pokemon-modal__visual-number">
-                            #{String(pokemon.id).padStart(3, "0")}
-                        </span>
 
-                        <img
-                            src={pokemon.image}
-                            alt={pokemon.nameFr}
-                        />
+
+                    <div className="pokemon-modal__visual">
+                        <div className="pokemon-modal__viewer">
+                            {!show3D && (
+                                <img
+                                    src={pokemon.image}
+                                    alt={pokemon.nameFr}
+                                />
+                            )}
+
+                            {modelUrl && (
+                                <div
+                                    className="pokemon-modal__model-container"
+                                    style={{
+                                        visibility: show3D ? "visible" : "hidden",
+                                        position: show3D ? "relative" : "absolute",
+                                        width: "100%",
+                                        height: "100%",
+                                        pointerEvents: show3D ? "auto" : "none",
+                                    }}
+                                >
+                                    <PokemonModel
+                                        key={modelUrl}
+                                        url={modelUrl}
+                                        onIdleCheck={setHasIdleAnimation}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {canShow3D && (
+                            <button
+                                type="button"
+                                className="pokemon-modal__toggle"
+                                onClick={() => setShow3D((prev) => !prev)}
+                            >
+                                {show3D ? "Voir en 2D" : "Voir en 3D"}
+                            </button>
+                        )}
                     </div>
+
+
                 </div>
 
             </div>

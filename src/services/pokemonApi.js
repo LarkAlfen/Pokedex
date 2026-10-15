@@ -1,5 +1,5 @@
 import { normalizeText } from "../utils/normalizeText";
-
+import { getPokemonIdleIds } from "./pokemon3dApi";
 const API_URL = "https://pokeapi.co/api/v2";
 
 const pokemonCache = new Map();
@@ -14,6 +14,7 @@ export async function getPokemons(
   max,
   selectedTypes = [],
   search = "",
+  only3D = false,
 ) {
   let pokemonList;
 
@@ -30,6 +31,22 @@ export async function getPokemons(
 
   // Recherche
   pokemonList = await filterPokemonsByName(pokemonList, search);
+
+  // Filtre : Pokémon disposant d'un modèle 3D
+if (only3D) {
+  const pokemonIdleIds = getPokemonIdleIds();
+
+  console.log("Filtre 3D activé :", only3D);
+  console.log("Nombre d'IDs Idle :", pokemonIdleIds.size);
+  console.log("Bulbizarre présent :", pokemonIdleIds.has(1));
+  console.log("Avant filtrage :", pokemonList.length);
+
+  pokemonList = pokemonList.filter((pokemon) =>
+    pokemonIdleIds.has(Number(pokemon.id))
+  );
+
+  console.log("Après filtrage :", pokemonList.length);
+}
 
   // Pagination
   const total = pokemonList.length;
@@ -243,13 +260,24 @@ async function getPokemonDetails(pokemon) {
 
   const nameFr = frenchName?.name ?? pokemonData.name;
 
-  const frenchDescription = speciesData.flavor_text_entries.find(
+  const descriptions = speciesData.flavor_text_entries;
+
+  const frenchDescription = descriptions.find(
     (entry) => entry.language.name === "fr",
   );
 
-  const description = frenchDescription
-    ? frenchDescription.flavor_text.replace(/[\n\f\r]/g, " ")
-    : "Aucune description disponible.";
+  const englishDescription = descriptions.find(
+    (entry) => entry.language.name === "en",
+  );
+
+  const description = (
+    frenchDescription?.flavor_text ||
+    englishDescription?.flavor_text ||
+    "Aucune description disponible."
+  )
+    .replace(/[\n\f\r]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const pokemonDetails = {
     id,

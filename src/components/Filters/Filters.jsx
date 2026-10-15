@@ -12,6 +12,8 @@ export function Filters({
   onRemoveType,
   search,
   onSearchChange,
+  only3D,
+  onOnly3DChange,
 }) {
   return (
     <div className="filters">
@@ -97,6 +99,17 @@ export function Filters({
           );
         })}
       </div>
+
+      <label className="filters__checkbox">
+        <input
+          type="checkbox"
+          checked={only3D}
+          onChange={(event) =>
+            onOnly3DChange(event.target.checked)
+          }
+        />
+        <span>Avec modèle 3D</span>
+      </label>
 
       <input
         type="search"

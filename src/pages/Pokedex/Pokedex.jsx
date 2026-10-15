@@ -7,7 +7,7 @@ import "./Pokedex.scss"
 import { Pagination } from "../../components/Pagination/Pagination";
 import { useDebounce } from "../../hooks/useDebounce";
 import { PokemonModal } from "../../components/PokemonModal/PokemonModal";
-
+import { getPokemon3DData } from "../../services/pokemon3dApi";
 const LIMIT = 24;
 
 export function Pokedex() {
@@ -19,6 +19,8 @@ export function Pokedex() {
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search, 300);
     const [selectedPokemon, setSelectedPokemon] = useState(null);
+    const [only3D, setOnly3D] = useState(false);
+
     useEffect(() => {
         async function loadPokemons() {
             try {
@@ -35,7 +37,8 @@ export function Pokedex() {
                         selectedGeneration.min,
                         selectedGeneration.max,
                         selectedTypes,
-                        debouncedSearch
+                        debouncedSearch,
+                        only3D
                     );
 
                 setPokemons(data.pokemons);
@@ -48,7 +51,7 @@ export function Pokedex() {
 
         loadPokemons();
 
-    }, [page, generation, selectedTypes, debouncedSearch]);
+    }, [page, generation, selectedTypes, debouncedSearch, only3D]);
 
     function handleTypeChange(type) {
         if (!type) return;
@@ -101,6 +104,11 @@ export function Pokedex() {
                 onRemoveType={handleRemoveType}
                 search={search}
                 onSearchChange={handleSearchChange}
+                only3D={only3D}
+                onOnly3DChange={(checked) => {
+                    setOnly3D(checked);
+                    setPage(1);
+                }}
             />
 
             <div className="pokemon-grid">
