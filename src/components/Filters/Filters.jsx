@@ -33,7 +33,7 @@ export function Filters({
       <div className="filters__header">
         <div className="filters__heading">
           <span className="filters__heading-icon">☷</span>
-          <h2>Filtres Pokémon</h2>
+          <h2>Filtres</h2>
         </div>
 
         {hasActiveFilters && (
