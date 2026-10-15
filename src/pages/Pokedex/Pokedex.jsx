@@ -20,32 +20,34 @@ export function Pokedex() {
     const debouncedSearch = useDebounce(search, 300);
     const [selectedPokemon, setSelectedPokemon] = useState(null);
     const [only3D, setOnly3D] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadPokemons() {
-            try {
-                const selectedGeneration =
-                    generations.find(
-                        (gen) =>
-                            gen.value === generation
-                    );
+            setLoading(true);
 
-                const data =
-                    await getPokemons(
-                        page,
-                        LIMIT,
-                        selectedGeneration.min,
-                        selectedGeneration.max,
-                        selectedTypes,
-                        debouncedSearch,
-                        only3D
-                    );
+            try {
+                const selectedGeneration = generations.find(
+                    (gen) => gen.value === generation
+                );
+
+                const data = await getPokemons(
+                    page,
+                    LIMIT,
+                    selectedGeneration.min,
+                    selectedGeneration.max,
+                    selectedTypes,
+                    debouncedSearch,
+                    only3D
+                );
 
                 setPokemons(data.pokemons);
                 setTotal(data.total);
 
             } catch (error) {
                 console.error(error);
+            } finally {
+                setLoading(false);
             }
         }
 
@@ -110,21 +112,42 @@ export function Pokedex() {
                     setPage(1);
                 }}
             />
+            {loading ? (
+                <div className="pokedex__loading">
+                    Chargement des Pokémon...
+                </div>
+            ) : total === 0 ? (
+                <div className="pokedex__empty">
+                    <span className="pokedex__empty-icon" aria-hidden="true">
+                        ◌
+                    </span>
 
-            <div className="pokemon-grid">
-                {pokemons.map((pokemon) => (
-                    <PokemonCard
-                        key={pokemon.id}
-                        pokemon={pokemon}
-                        onClick={() => setSelectedPokemon(pokemon)}
+                    <h2>Aucun Pokémon trouvé</h2>
+
+                    <p>
+                        Aucun Pokémon ne correspond à vos critères de recherche.
+                        Essayez de modifier vos filtres ou votre recherche.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <div className="pokemon-grid">
+                        {pokemons.map((pokemon) => (
+                            <PokemonCard
+                                key={pokemon.id}
+                                pokemon={pokemon}
+                                onClick={() => setSelectedPokemon(pokemon)}
+                            />
+                        ))}
+                    </div>
+
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
                     />
-                ))}
-            </div>
-            <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-            />
+                </>
+            )}
             <PokemonModal
                 pokemon={selectedPokemon}
                 onClose={() => setSelectedPokemon(null)}
