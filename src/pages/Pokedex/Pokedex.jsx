@@ -8,7 +8,7 @@ import { Pagination } from "../../components/Pagination/Pagination";
 import { useDebounce } from "../../hooks/useDebounce";
 import { PokemonModal } from "../../components/PokemonModal/PokemonModal";
 import { getPokemon3DData } from "../../services/pokemon3dApi";
-const LIMIT = 24;
+const LIMIT = 27;
 
 export function Pokedex() {
     const [page, setPage] = useState(1);
