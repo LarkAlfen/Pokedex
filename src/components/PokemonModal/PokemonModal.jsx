@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { pokemonTypes } from "../../data/pokemonTypes";
@@ -8,11 +8,59 @@ import { getPokemon3DModel } from "../../services/pokemon3dApi";
 
 import "./PokemonModal.scss";
 
-export function PokemonModal({ pokemon, onClose }) {
+export function PokemonModal({ pokemon, onClose, onPrevious, onNext }) {
     const [show3D, setShow3D] = useState(false);
     const [modelUrl, setModelUrl] = useState(null);
     const [loading3D, setLoading3D] = useState(false);
     const [hasIdleAnimation, setHasIdleAnimation] = useState(false);
+    const audioRef = useRef(null);
+    const touchStartRef = useRef(null);
+
+    const handleTouchStart = (event) => {
+        if (event.touches.length !== 1) return;
+        touchStartRef.current = {
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY,
+        };
+    };
+
+    const handleTouchEnd = (event) => {
+        const start = touchStartRef.current;
+        touchStartRef.current = null;
+        if (!start || event.changedTouches.length !== 1) return;
+
+        const dx = event.changedTouches[0].clientX - start.x;
+        const dy = event.changedTouches[0].clientY - start.y;
+
+        // Ignore les petits mouvements et le défilement vertical.
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+        if (dx < 0) onNext?.();
+        else onPrevious?.();
+    };
+
+    const playCry = () => {
+        if (!pokemon?.cries?.latest) return;
+
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+
+        const audio = new Audio(pokemon.cries.latest);
+        audioRef.current = audio;
+        audio.play().catch(console.error);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, [pokemon?.id]);
+
 
     // Chargement du modèle 3D
     useEffect(() => {
@@ -24,6 +72,8 @@ export function PokemonModal({ pokemon, onClose }) {
         setModelUrl(null);
         setLoading3D(true);
         setHasIdleAnimation(false);
+
+
 
         async function loadModel() {
             try {
@@ -76,18 +126,30 @@ export function PokemonModal({ pokemon, onClose }) {
     return createPortal(
         <div
             className="pokemon-modal__overlay"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
                     onClose();
                 }
             }}
         >
+
             <div
                 className="pokemon-modal"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="pokemon-modal-title"
             >
+                <button
+                    type="button"
+                    className="pokemon-modal__nav pokemon-modal__nav--previous"
+                    onClick={onPrevious}
+                    disabled={!onPrevious}
+                    aria-label="Pokémon précédent"
+                >
+                    ‹
+                </button>
                 <button
                     type="button"
                     className="pokemon-modal__close"
@@ -237,15 +299,23 @@ export function PokemonModal({ pokemon, onClose }) {
                     <div className="pokemon-modal__visual">
                         <div className="pokemon-modal__viewer">
                             {!show3D && (
-                                <img
-                                    src={pokemon.animatedSprite ?? pokemon.pixelSprite ?? pokemon.image}
-                                    alt={pokemon.nameFr}
-                                    className={
-                                        pokemon.animatedSprite || pokemon.pixelSprite
-                                            ? "pokemon-modal__sprite"
-                                            : ""
-                                    }
-                                />
+                                <button
+                                    type="button"
+                                    className="pokemon-modal__sprite-button"
+                                    onClick={playCry}
+                                    disabled={!pokemon.cries?.latest}
+                                    aria-label={`Écouter le cri de ${pokemon.nameFr}`}
+                                >
+                                    <img
+                                        src={pokemon.animatedSprite ?? pokemon.pixelSprite ?? pokemon.image}
+                                        alt=""
+                                        className={
+                                            pokemon.animatedSprite || pokemon.pixelSprite
+                                                ? "pokemon-modal__sprite"
+                                                : ""
+                                        }
+                                    />
+                                </button>
                             )}
 
                             {modelUrl && (
@@ -279,6 +349,15 @@ export function PokemonModal({ pokemon, onClose }) {
                         )}
                     </div>
                 </div>
+                <button
+                    type="button"
+                    className="pokemon-modal__nav pokemon-modal__nav--next"
+                    onClick={onNext}
+                    disabled={!onNext}
+                    aria-label="Pokémon suivant"
+                >
+                    ›
+                </button>
             </div>
         </div>,
         document.body

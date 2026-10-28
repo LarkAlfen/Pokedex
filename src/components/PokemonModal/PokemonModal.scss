@@ -12,6 +12,71 @@
     inset 0 -6px 0 rgba(80, 0, 0, 0.15),
     0 30px 80px rgba(0, 0, 0, 0.3);
   animation: modalAppear 0.3s ease;
+  &__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1001;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 56px;
+
+  border: none;
+  background: transparent;
+  color: #ffffff;
+
+  font-size: 40px;
+  cursor: pointer;
+
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.65;
+  }
+
+  &:disabled {
+    opacity: 0.2;
+    cursor: default;
+  }
+
+  &--previous {
+    left: -55px;
+  }
+
+  &--next {
+    right: -55px;
+  }
+}
+  &__sprite-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+
+    &:active img {
+      transform: scale(0.95);
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--text-primary);
+      outline-offset: 4px;
+    }
+  }
   // ========================================
   // VOYANTS DU POKÉDEX
   // ========================================
@@ -425,7 +490,7 @@
     font-size: 13px;
     color: #9299a5;
   }
-// TABLETTE
+  // TABLETTE
   @media (max-width: 850px) {
     width: min(600px, 100%);
     padding: 65px 20px 24px;
@@ -438,8 +503,18 @@
       min-height: 0;
       padding: 20px;
     }
-    &__viewer { height: 280px; }
-    &__infos { padding: 18px; }
+    &__viewer {
+      height: 280px;
+    }
+    &__infos {
+      padding: 18px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    &__nav {
+      display: none;
+    }
   }
   // TÉLÉPHONE : interface compacte et hauteur adaptée à l'écran
   @media (max-width: 600px) {
@@ -453,16 +528,36 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #a51e2d transparent;
-    &::before { top: 10px; left: 16px; width: 28px; height: 28px; }
-    &::after { top: 20px; left: 70px; width: 8px; height: 8px;
-      box-shadow: 16px 0 #67d98a, 32px 0 #6bbcff;
+    &::before {
+      top: 10px;
+      left: 16px;
+      width: 28px;
+      height: 28px;
+    }
+    &::after {
+      top: 20px;
+      left: 70px;
+      width: 8px;
+      height: 8px;
+      box-shadow:
+        16px 0 #67d98a,
+        32px 0 #6bbcff;
     }
     &__overlay {
       padding: 8px;
       align-items: safe center;
     }
-    &__close { top: 9px; right: 12px; width: 34px; height: 34px; font-size: 22px; }
-    &__content { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    &__close {
+      top: 9px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      font-size: 22px;
+    }
+    &__content {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
     &__visual {
       grid-row: 1;
       min-height: 0;
@@ -474,43 +569,104 @@
     &__viewer {
       height: clamp(140px, 26dvh, 210px);
       min-height: 0;
-      img { max-width: 100%; max-height: 100%; }
+      img {
+        max-width: 100%;
+        max-height: 100%;
+      }
+      .pokemon-modal__sprite-button {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+      }
       img.pokemon-modal__sprite {
         width: min(160px, 75%);
         height: auto;
         aspect-ratio: 1;
       }
     }
-    &__infos { padding: 10px; gap: 8px; border-width: 3px; }
-    &__field { padding: 10px; gap: 6px; }
-    &__field--identity { padding: 4px 0 8px; }
-    &__number { font-size: 12px; }
-    &__name { font-size: clamp(26px, 7vw, 36px); }
-    &__types { gap: 6px; margin-top: 2px; }
-    &__type { padding: 5px 10px; font-size: 11px; }
-    &__description { font-size: 12px; line-height: 1.45; }
-    &__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-    &__stat { padding: 10px; gap: 6px; }
-    &__stat:last-child { grid-column: 1 / -1; }
-    &__toggle { min-width: 130px; padding: 7px 14px; font-size: 12px; }
+    &__infos {
+      padding: 10px;
+      gap: 8px;
+      border-width: 3px;
+    }
+    &__field {
+      padding: 10px;
+      gap: 6px;
+    }
+    &__field--identity {
+      padding: 4px 0 8px;
+    }
+    &__number {
+      font-size: 12px;
+    }
+    &__name {
+      font-size: clamp(26px, 7vw, 36px);
+    }
+    &__types {
+      gap: 6px;
+      margin-top: 2px;
+    }
+    &__type {
+      padding: 5px 10px;
+      font-size: 11px;
+    }
+    &__description {
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    &__stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    &__stat {
+      padding: 10px;
+      gap: 6px;
+    }
+    &__stat:last-child {
+      grid-column: 1 / -1;
+    }
+    &__toggle {
+      min-width: 130px;
+      padding: 7px 14px;
+      font-size: 12px;
+    }
   }
   // TÉLÉPHONES PEU HAUTS
   @media (max-width: 600px) and (max-height: 750px) {
     padding-top: 44px;
-    &__viewer { height: 135px; }
-    &__visual { padding: 6px; }
-    &__infos { padding: 8px; gap: 6px; }
-    &__field { padding: 8px; }
-    &__field--identity { padding: 2px 0 6px; }
-    &__stats { gap: 5px; }
-    &__stat { padding: 8px; }
+    &__viewer {
+      height: 135px;
+    }
+    &__visual {
+      padding: 6px;
+    }
+    &__infos {
+      padding: 8px;
+      gap: 6px;
+    }
+    &__field {
+      padding: 8px;
+    }
+    &__field--identity {
+      padding: 2px 0 6px;
+    }
+    &__stats {
+      gap: 5px;
+    }
+    &__stat {
+      padding: 8px;
+    }
   }
   // TÉLÉPHONES TRÈS ÉTROITS
   @media (max-width: 380px) {
     padding-right: 9px;
     padding-left: 9px;
-    &__infos { padding: 8px; }
-    &__name { font-size: 28px; }
+    &__infos {
+      padding: 8px;
+    }
+    &__name {
+      font-size: 28px;
+    }
   }
 }
 // ========================================

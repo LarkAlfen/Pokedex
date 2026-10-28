@@ -8,7 +8,7 @@ import { Pagination } from "../../components/Pagination/Pagination";
 import { useDebounce } from "../../hooks/useDebounce";
 import { PokemonModal } from "../../components/PokemonModal/PokemonModal";
 import { getPokemon3DData } from "../../services/pokemon3dApi";
-const LIMIT = 40;
+const LIMIT = 88;
 
 export function Pokedex() {
     const [page, setPage] = useState(1);
@@ -95,6 +95,21 @@ export function Pokedex() {
         setPage(1);
     }
 
+    const currentIndex = pokemons.findIndex(
+        (p) => p.id === selectedPokemon?.id
+    );
+
+    const handlePrevious = () => {
+        if (currentIndex > 0) {
+            setSelectedPokemon(pokemons[currentIndex - 1]);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentIndex < pokemons.length - 1) {
+            setSelectedPokemon(pokemons[currentIndex + 1]);
+        }
+    };
     return (
         <main className="container">
 
@@ -151,6 +166,12 @@ export function Pokedex() {
             <PokemonModal
                 pokemon={selectedPokemon}
                 onClose={() => setSelectedPokemon(null)}
+                onPrevious={currentIndex > 0 ? handlePrevious : undefined}
+                onNext={
+                    currentIndex < pokemons.length - 1
+                        ? handleNext
+                        : undefined
+                }
             />
         </main>
     );

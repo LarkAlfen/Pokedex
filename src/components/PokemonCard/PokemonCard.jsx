@@ -2,8 +2,9 @@ import "./PokemonCard.scss";
 import { typeIcons } from "../../data/typeIcons";
 
 export function PokemonCard({ pokemon, onClick }) {
+    const primaryType = pokemon.types?.[0] ?? "normal";
     return (
-        <article className="pokemon-card" onClick={onClick}>
+        <article className={`pokemon-card pokemon-card--${primaryType}`} onClick={onClick}>
 
             <span className="pokemon-card__id">
                 #{pokemon.id.toString().padStart(3, "0")}
